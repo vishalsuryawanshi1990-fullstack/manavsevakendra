@@ -1,0 +1,230 @@
+import type { RegistrationSettings } from '../components/MembershipFormExact';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
+
+export type Institution = {
+  id: string;
+  icon: string;
+  nameMr: string;
+  nameEn: string;
+  tagline: string;
+  desc: string;
+  tags: string[];
+};
+
+export type LabelValue = { label: string; value: string };
+export type JourneyStep = { year: string; title: string; detail: string };
+export type GalleryItem = { title: string; icon: string };
+export type FaqEntry = { q: string; a: string };
+export type Floor = { title: string; area: string; rooms: string[] };
+
+export type CmsData = {
+  institutions: Institution[];
+  trust_stats: LabelValue[];
+  journey: JourneyStep[];
+  gallery: GalleryItem[];
+  faq: FaqEntry[];
+  project_info: LabelValue[];
+  floors: Floor[];
+  main_facilities: string[];
+  outdoor_facilities: string[];
+  campus_buildings: string[];
+  campus_features: string[];
+  vision_pillars: string[];
+};
+
+export type SiteSettings = RegistrationSettings & {
+  hero_title: string;
+  hero_location: string;
+  hero_description: string;
+  mission_text: string;
+};
+
+// Fallback content used if the Laravel API is unreachable, so the public site
+// never breaks just because the backend/admin panel is down.
+export const DEFAULT_CMS: CmsData = {
+  institutions: [
+    {
+      id: 'economics',
+      icon: '📊',
+      nameMr: 'स्कूल ऑफ इकॉनॉमिक्स',
+      nameEn: 'School of Economics',
+      tagline: 'Human Services College of Economics',
+      desc: 'अर्थशास्त्र, वाणिज्य व व्यवस्थापन क्षेत्रातील गुणवत्तापूर्ण शिक्षण देण्याच्या उद्देशाने संकल्पित महाविद्यालय.',
+      tags: ['अर्थशास्त्र', 'वाणिज्य', 'व्यवस्थापन', 'संशोधन'],
+    },
+    {
+      id: 'computer-science',
+      icon: '💻',
+      nameMr: 'कॉम्प्युटर सायन्स व आयटी',
+      nameEn: 'Computer Science & IT',
+      tagline: 'संगणकीय विश्व सागर',
+      desc: 'संगणक विज्ञान, माहिती तंत्रज्ञान व डिजिटल कौशल्य विकासासाठी समर्पित केंद्र.',
+      tags: ['संगणक विज्ञान', 'माहिती तंत्रज्ञान', 'डेटा सायन्स', 'डिजिटल कौशल्य'],
+    },
+    {
+      id: 'psychology',
+      icon: '🧠',
+      nameMr: 'स्कूल ऑफ सायकॉलॉजी',
+      nameEn: 'School of Psychology',
+      tagline: 'College of Psychology',
+      desc: 'मानसशास्त्र, समुपदेशन व मानसिक आरोग्य या क्षेत्रातील शिक्षण व संशोधनासाठी संकल्पित महाविद्यालय.',
+      tags: ['मानसशास्त्र', 'समुपदेशन', 'संशोधन', 'मानसिक आरोग्य'],
+    },
+    {
+      id: 'library',
+      icon: '📚',
+      nameMr: 'ग्रंथालय आणि संशोधन केंद्र',
+      nameEn: 'Library & Research Center',
+      tagline: 'छत्रपती संभाजीनगर',
+      desc: '६०-८० आसन क्षमतेचे वाचनालय, डिजिटल लायब्ररी व संशोधन केंद्र असलेली G+2 इमारत प्रस्तावित.',
+      tags: ['वाचनालय', 'डिजिटल लायब्ररी', 'संशोधन केंद्र', 'सेमिनार हॉल'],
+    },
+  ],
+  trust_stats: [
+    { label: 'स्थापना वर्ष', value: '2013' },
+    { label: 'सार्वजनिक विश्वस्त संस्था नोंदणी', value: 'F-20543' },
+    { label: 'ग्रंथालय वाचन क्षमता (प्रस्तावित)', value: '६०-८० आसने' },
+    { label: 'कॅम्पस क्षेत्रफळ (Vision 2035)', value: '१ एकर' },
+  ],
+  journey: [
+    {
+      year: '2013',
+      title: 'संस्थेची अधिकृत नोंदणी',
+      detail: 'सार्वजनिक विश्वस्त संस्था नोंदणी क्र. F-20543 आणि संस्था नोंदणी Maha-1051/2013 अंतर्गत मानव सेवा केंद्रची स्थापना.',
+    },
+    {
+      year: 'सद्यस्थिती',
+      title: 'ग्रंथालय व संशोधन केंद्राचा प्रस्तावित आराखडा',
+      detail: 'छत्रपती संभाजीनगर येथे G+2 मानव सेवा ग्रंथालय आणि संशोधन केंद्र इमारतीचे संकल्पचित्र तयार — वाचन हॉल, डिजिटल लायब्ररी व संशोधन केंद्रासह.',
+    },
+    {
+      year: 'Vision 2035',
+      title: '१ एकर कॅम्पस मास्टर प्लॅन',
+      detail: 'मावळ, पुणे येथे प्रशासकीय इमारत, महाविद्यालये, ग्रंथालय, संगणक केंद्र व सभागृह यांचा समावेश असलेला संकल्पनात्मक कॅम्पस आराखडा.',
+    },
+  ],
+  gallery: [
+    { title: 'मुख्य वाचन कक्ष', icon: '📖' },
+    { title: 'डिजिटल लायब्ररी', icon: '💻' },
+    { title: 'ई-लर्निंग सेंटर', icon: '🖥️' },
+    { title: 'संशोधक अभ्यास कक्ष', icon: '🔬' },
+    { title: 'सेमिनार हॉल', icon: '🎤' },
+    { title: 'बहुउद्देशीय सभागृह', icon: '🏛️' },
+  ],
+  faq: [
+    {
+      q: 'आजीव सदस्यत्वासाठी कोण अर्ज करू शकतो?',
+      a: 'वयाची १८ वर्षे पूर्ण असलेली कोणतीही व्यक्ती आजीव सदस्यत्वासाठी अर्ज करू शकते. अर्ज संस्थेच्या पदाधिकाऱ्यांकडून मंजूर झाल्यावर सदस्यत्व निश्चित होते.',
+    },
+    {
+      q: 'सदस्यत्व शुल्क व आवश्यक कागदपत्रे कोणती?',
+      a: 'सदस्यत्व शुल्क व आवश्यक कागदपत्रांची अद्ययावत माहिती संस्थेच्या कार्यालयाशी संपर्क साधून मिळवता येईल.',
+    },
+    {
+      q: 'ग्रंथालय व संशोधन केंद्र कधी सुरू होणार?',
+      a: 'सध्या इमारतीचा आराखडा तयार असून, प्रत्यक्ष बांधकामाचे वेळापत्रक अंतिम झाल्यावर संस्थेच्या संकेतस्थळावर व सूचना फलकावर कळवले जाईल.',
+    },
+    {
+      q: 'प्रस्तावक व अनुमोदक असणे आवश्यक आहे का?',
+      a: 'अर्जामध्ये प्रस्तावक व अनुमोदकाचे तपशील ऐच्छिक आहेत — विद्यमान सदस्याची शिफारस असल्यास भरू शकता, अन्यथा रिकामे ठेवून अर्ज सादर करता येतो.',
+    },
+  ],
+  project_info: [
+    { label: 'प्लॉट साईज', value: "70' X 40' (2800 Sq.Ft.)" },
+    { label: 'बांधकाम क्षेत्र', value: 'ग्राउंड फ्लोअर : 2000 Sq.Ft.' },
+    { label: 'एकूण मजले', value: 'G + 2 (तीन मजली)' },
+    { label: 'प्रकार', value: 'ग्रंथालय आणि संशोधन केंद्र' },
+    { label: 'स्थळ', value: 'छत्रपती संभाजीनगर' },
+  ],
+  floors: [
+    {
+      title: 'ग्राउंड फ्लोअर',
+      area: '2000 Sq.Ft.',
+      rooms: ['स्टॅक / बुक सेक्शन', 'रीडिंग हॉल', 'रिसेप्शन', 'न्यूजपेपर व पिरियॉडिकल विभाग', 'टॉयलेट (M/F)', 'मुख्य प्रवेशद्वार'],
+    },
+    {
+      title: 'पहिला मजला',
+      area: '2000 Sq.Ft.',
+      rooms: ['रेफरन्स सेक्शन', 'डिजिटल लायब्ररी', 'ई-लर्निंग सेंटर', 'सेमिनार रूम', 'टॉयलेट (M/F)'],
+    },
+    {
+      title: 'दुसरा मजला',
+      area: '2000 Sq.Ft.',
+      rooms: ['रेअर बुक कलेक्शन', 'संशोधक व दस्तऐवजीकरण केंद्र', 'डायरेक्टर कॅबिन', 'ऑडिटोरियम / बहुउद्देशीय हॉल', 'कॉन्फरन्स रूम', 'टॉयलेट (M/F)'],
+    },
+  ],
+  main_facilities: [
+    'तीन मजली आधुनिक वाचनालय',
+    '६०-८० आसन क्षमतेचा वाचन हॉल',
+    'डिजिटल लायब्ररी व ई-लर्निंग सुविधा',
+    'संशोधन केंद्र व दुर्मिळ ग्रंथ संग्रह',
+    'सेमिनार हॉल व बहुउद्देशीय सभागृह',
+    'दिव्यांगांसाठी सुविधा',
+    'लिफ्ट, सीसीटीव्ही, अग्निसुरक्षा प्रणाली',
+    'सोलार सिस्टम व रेनवॉटर हार्वेस्टिंग',
+  ],
+  outdoor_facilities: ['कार पार्किंग (१२-१५)', 'दुचाकी पार्किंग (३०-४०)', 'सुंदर लँडस्केप गार्डन', 'राष्ट्रीय ध्वजस्तंभ'],
+  campus_buildings: [
+    'प्रशासकीय इमारत',
+    'स्कूल ऑफ इकॉनॉमिक्स (Human Services College of Economics)',
+    'स्कूल ऑफ सायकॉलॉजी',
+    'ग्रंथालय आणि संशोधन केंद्र',
+    'कॉम्प्युटर सायन्स व आयटी (संगणकीय विश्व सागर)',
+    'सभागृह / बहुउद्देशीय हॉल',
+  ],
+  campus_features: [
+    'हरित व पर्यावरणपूरक कॅम्पस',
+    'सौर ऊर्जा प्रकल्प',
+    'डिजिटल व आधुनिक शिक्षण व्यवस्था',
+    'सर्व परीक्षांसाठी उत्तम सुविधा',
+    'पावसाचे पाणी साठवण व्यवस्था',
+    'क्रीडा व आरोग्य सुविधा',
+    'सीसीटीव्ही व स्मार्ट सुरक्षा',
+  ],
+  vision_pillars: [
+    'गुणवत्तापूर्ण शिक्षण',
+    'संशोधन व नवोन्मेष',
+    'कौशल्य विकास',
+    'डिजिटल शिक्षण',
+    'नेतृत्व निर्मिती',
+    'समाज विकास व सेवा',
+    'पर्यावरण संवर्धन',
+  ],
+};
+
+export const DEFAULT_SETTINGS: SiteSettings = {
+  hero_title: 'मानव सेवा केंद्र',
+  hero_location: 'मावळ, पुणे',
+  hero_description:
+    '"मानव सेवा हीच ईश्वर सेवा" या भावनेने कार्यरत मानव सेवा केंद्र अंतर्गत चार उपक्रम/महाविद्यालये संकल्पित आहेत — स्कूल ऑफ इकॉनॉमिक्स, कॉम्प्युटर सायन्स व आयटी, स्कूल ऑफ सायकॉलॉजी आणि ग्रंथालय आणि संशोधन केंद्र — हे सर्व एका १ एकर कॅम्पसवर उभारले जाणार आहेत.',
+  mission_text:
+    '"मानव सेवा हीच ईश्वर सेवा" या भावनेने प्रेरित होऊन, ज्ञान, संशोधन आणि समाजसेवा यांच्या माध्यमातून समाजातील सर्व घटकांपर्यंत दर्जेदार शिक्षण व वाचन संस्कृती पोहोचवणे हे मानव सेवा केंद्राचे ध्येय आहे. गुणवत्तापूर्ण शिक्षण, कौशल्य विकास आणि संस्काराचे आदर्श केंद्र उभारण्याचा आमचा संकल्प आहे.',
+  address: 'आय-४४, इलाईट ग्रीन एकर, महिंद्रा कंपनीसमोर, टाकवे रोड, जांभूळ, तालुका मावळ, जिल्हा पुणे - ४१२१०६',
+  reg_trust_number: 'F-20543',
+  reg_society_number: 'Maha-1051/2013',
+  life_membership_amount: 10000,
+  donation_suggested_amounts: [500, 1000, 2100, 5000, 10000],
+  razorpay_key_id: '',
+  razorpay_enabled: false,
+};
+
+async function safeFetchJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, { next: { revalidate: 30 } });
+    if (!res.ok) return fallback;
+    return (await res.json()) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export async function getCmsData(): Promise<CmsData> {
+  const data = await safeFetchJson<Partial<CmsData>>('/cms', {});
+  return { ...DEFAULT_CMS, ...data };
+}
+
+export async function getSiteSettings(): Promise<SiteSettings> {
+  const data = await safeFetchJson<Partial<SiteSettings>>('/settings', {});
+  return { ...DEFAULT_SETTINGS, ...data };
+}
