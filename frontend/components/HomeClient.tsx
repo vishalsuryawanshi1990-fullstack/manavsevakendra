@@ -477,7 +477,7 @@ export default function HomeClient({ cms, settings }: { cms: CmsData; settings: 
         <div className="mx-auto grid max-w-7xl gap-10 px-6 sm:grid-cols-2 lg:grid-cols-3 lg:px-8">
           <div>
             <div className="flex items-center gap-3">
-              <Logo size={48} ringText={false} />
+              <Logo size={48} />
               <div>
                 <p className="font-extrabold">मानव सेवा केंद्र</p>
                 <p className="text-xs text-navy-200">मानव सेवा हीच ईश्वर सेवा</p>
