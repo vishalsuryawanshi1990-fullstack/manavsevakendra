@@ -101,7 +101,8 @@ to your deployed API's base URL, e.g. `https://api.yourdomain.com/api`, then reb
 - **deploy** — only on a push to `main`, and only if both jobs above pass: SSHes into the server, ensures
   `DEPLOY_APP_PATH` is a git checkout of this repo on `main` (initializing it in place on first run — it
   does **not** require the directory to be empty beforehand), then runs `deploy/deploy.sh`, which installs
-  PHP deps and runs migrations/caches for the **Laravel backend only**.
+  PHP deps, runs migrations/caches, and publishes the built `public/` output into `DEPLOY_PUBLIC_HTML` for
+  the **Laravel backend only**.
 
   The Next.js frontend is **not** deployed by this pipeline — it's served separately through Hostinger's own
   git-connected app hosting, which rebuilds automatically on every push to `main` independently of this
@@ -110,6 +111,24 @@ to your deployed API's base URL, e.g. `https://api.yourdomain.com/api`, then reb
 CI (the first two jobs) runs on every push and PR automatically — nothing to configure. **Deploy is gated
 behind GitHub Secrets** that don't exist yet; until you add them, the `deploy` job fails at the SSH step with
 a "missing server host" error (safe — it doesn't affect the other two jobs).
+
+### Two paths, not one: app root vs. document root
+
+Some hosts (this one included — a Hostinger "website" addon) fix the web server's document root to a
+`public_html` folder that **can't be repointed** at wherever you put the app. Trying to run the whole Laravel
+app from inside `public_html` would work, but it'd also serve `.env`, `app/`, `storage/`, etc. straight over
+HTTP — so instead:
+
+- `DEPLOY_APP_PATH` — the **full app**, cloned from git, lives here, outside the web root entirely.
+- `DEPLOY_PUBLIC_HTML` — the **fixed document root** your host actually serves. Every deploy, `deploy.sh`
+  copies just the built `public/` folder here, plus a small path-adjusted `index.php`
+  (`deploy/public_html/index.php`, which points at `../laravel/vendor/autoload.php` etc. instead of the
+  default `../vendor/autoload.php`, since it now lives one level away from the rest of the app) — see the
+  `[3/3]` step in `deploy.sh`.
+
+If your host lets you point the document root directly at `$DEPLOY_APP_PATH/public`, you don't need any of
+this — just set `DEPLOY_PUBLIC_HTML` to that same `.../public` path and the sync step becomes a no-op copy of
+the same folder onto itself. Either way works; the bridge only matters when the document root is fixed.
 
 ### One-time setup to enable auto-deploy
 
@@ -122,26 +141,22 @@ a "missing server host" error (safe — it doesn't affect the other two jobs).
    | `DEPLOY_USER` | your SSH/cPanel username |
    | `DEPLOY_PASSWORD` | your SSH/cPanel password |
    | `DEPLOY_PORT` | SSH port, only if not 22 |
-   | `DEPLOY_APP_PATH` | absolute path to the Laravel app's document root on the server, e.g. `/home/<user>/domains/api.yourdomain.com/laravel` |
+   | `DEPLOY_APP_PATH` | absolute path where the full app should live, e.g. `/home/<user>/domains/api.yourdomain.com/laravel` |
+   | `DEPLOY_PUBLIC_HTML` | absolute path to the **actual** document root your web server serves `api.yourdomain.com` from — check your hosting panel's PHP/domain configuration, don't assume |
 
    If you have an SSH key instead of a password, swap the `password:` input in the `deploy` job for `key:
    ${{ secrets.DEPLOY_SSH_KEY }}` and add that secret instead — keys are preferred where available.
 
-2. **Make sure `DEPLOY_APP_PATH` is the actual document root your web server serves `api.yourdomain.com`
-   from** (check this in your hosting panel — the domain/subdomain's "Document Root" or "Application root"
-   setting). The pipeline will happily deploy a perfectly working Laravel app to the wrong folder if this
-   doesn't match, and every request will keep 404ing.
-
-3. **Configure `.env` directly on the server**, at `$DEPLOY_APP_PATH/.env` — it's gitignored, so the pipeline
+2. **Configure `.env` directly on the server**, at `$DEPLOY_APP_PATH/.env` — it's gitignored, so the pipeline
    never creates, uploads, or overwrites it. Set `DB_*`, `APP_KEY` (`php artisan key:generate` once),
    `ADMIN_EMAIL`/`ADMIN_PASSWORD`, `CORS_ALLOWED_ORIGINS` (your real frontend domain, not `localhost`), and
    Razorpay keys if using payments.
 
-4. Push to `main`. The `deploy` job will show up in the **Actions** tab. On the very first run it clones the
+3. Push to `main`. The `deploy` job will show up in the **Actions** tab. On the very first run it clones the
    repo into `DEPLOY_APP_PATH` (in place — any existing untracked files there, like an old `.env`, are left
    alone); on every run after, it fetches and hard-resets to `origin/main`.
 
-5. **Create the admin login once** — the deploy pipeline deliberately never runs `php artisan db:seed`
+4. **Create the admin login once** — the deploy pipeline deliberately never runs `php artisan db:seed`
    (it would silently overwrite any CMS content you've since edited through `/admin/cms` on every deploy).
    After the first successful deploy, SSH/panel-terminal in and run:
    ```bash

@@ -91,4 +91,4 @@ jobs:
             fi
             git fetch origin main
             git reset --hard origin/main
-            REPO_PATH="$REPO_PATH" bash "$REPO_PATH/deploy/deploy.sh"
+            REPO_PATH="$REPO_PATH" PUBLIC_HTML="${{ secrets.DEPLOY_PUBLIC_HTML }}" bash "$REPO_PATH/deploy/deploy.sh"
