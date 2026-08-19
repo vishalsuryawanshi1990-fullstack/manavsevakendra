@@ -81,4 +81,7 @@ jobs:
             if [ ! -d ~/manavsevakendra/.git ]; then
               git clone --branch main https://github.com/${{ github.repository }}.git ~/manavsevakendra
             fi
+            cd ~/manavsevakendra
+            git fetch origin main
+            git reset --hard origin/main
             bash ~/manavsevakendra/deploy/deploy.sh
