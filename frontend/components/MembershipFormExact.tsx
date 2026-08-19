@@ -126,20 +126,75 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
 }
 
 function DigitBoxes({ groups, name }: { groups: number[]; name: string }) {
+  const total = groups.reduce((sum, len) => sum + len, 0);
+  const boxRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const focusBox = (flatIndex: number) => {
+    boxRefs.current[flatIndex]?.focus();
+    boxRefs.current[flatIndex]?.select();
+  };
+
+  const handleChange = (flatIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const digit = e.target.value.replace(/\D/g, '').slice(-1);
+    e.target.value = digit;
+    if (digit && flatIndex < total - 1) {
+      focusBox(flatIndex + 1);
+    }
+  };
+
+  const handleKeyDown = (flatIndex: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !e.currentTarget.value && flatIndex > 0) {
+      e.preventDefault();
+      focusBox(flatIndex - 1);
+      const prev = boxRefs.current[flatIndex - 1];
+      if (prev) prev.value = '';
+    } else if (e.key === 'ArrowLeft' && flatIndex > 0) {
+      e.preventDefault();
+      focusBox(flatIndex - 1);
+    } else if (e.key === 'ArrowRight' && flatIndex < total - 1) {
+      e.preventDefault();
+      focusBox(flatIndex + 1);
+    }
+  };
+
+  const handlePaste = (flatIndex: number, e: React.ClipboardEvent<HTMLInputElement>) => {
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '').split('');
+    if (digits.length < 2) return;
+    e.preventDefault();
+    digits.slice(0, total - flatIndex).forEach((digit, offset) => {
+      const box = boxRefs.current[flatIndex + offset];
+      if (box) box.value = digit;
+    });
+    focusBox(Math.min(flatIndex + digits.length, total - 1));
+  };
+
+  let flatIndex = -1;
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {groups.map((len, gi) => (
         <span key={gi} className="flex items-center gap-1.5">
           {gi > 0 && <span className="text-navy-400">-</span>}
-          {Array.from({ length: len }).map((_, i) => (
-            <input
-              key={i}
-              name={`${name}_${gi}_${i}`}
-              maxLength={1}
-              inputMode="numeric"
-              className="h-7 w-6 rounded border border-navy-300 bg-white text-center text-xs font-bold text-navy-900 outline-none focus:border-maroon-500"
-            />
-          ))}
+          {Array.from({ length: len }).map((_, i) => {
+            flatIndex += 1;
+            const currentIndex = flatIndex;
+            return (
+              <input
+                key={i}
+                ref={(el) => {
+                  boxRefs.current[currentIndex] = el;
+                }}
+                name={`${name}_${gi}_${i}`}
+                maxLength={1}
+                inputMode="numeric"
+                autoComplete="off"
+                onChange={(e) => handleChange(currentIndex, e)}
+                onKeyDown={(e) => handleKeyDown(currentIndex, e)}
+                onPaste={(e) => handlePaste(currentIndex, e)}
+                className="h-7 w-6 rounded border border-navy-300 bg-white text-center text-xs font-bold text-navy-900 outline-none focus:border-maroon-500"
+              />
+            );
+          })}
         </span>
       ))}
     </div>
