@@ -11,6 +11,21 @@ REPO_URL="${REPO_URL:-https://github.com/vishalsuryawanshi1990-fullstack/manavse
 NODE_VENV="${NODE_VENV:-$HOME/nodevenv/manavsevakendra/frontend/20/bin/activate}"
 BRANCH="${DEPLOY_BRANCH:-main}"
 
+# The account's default `php`/`composer` on PATH can resolve to an older
+# version (e.g. 8.1) than what the app requires (8.3). Prefer the versioned
+# CLI binary the host provides (Hostinger/cPanel-style `php83`) if present.
+PHP_BIN="${PHP_BIN:-}"
+if [ -z "$PHP_BIN" ]; then
+  if command -v php83 >/dev/null 2>&1; then
+    PHP_BIN="php83"
+  elif command -v php8.3 >/dev/null 2>&1; then
+    PHP_BIN="php8.3"
+  else
+    PHP_BIN="php"
+  fi
+fi
+echo "Using PHP binary: $PHP_BIN ($($PHP_BIN -v | head -n1))"
+
 echo "==> [1/6] Pulling latest code ($BRANCH)"
 if [ ! -d "$REPO_PATH/.git" ]; then
   echo "    repo not found at $REPO_PATH, cloning $REPO_URL"
@@ -21,14 +36,14 @@ git fetch origin "$BRANCH"
 git reset --hard "origin/$BRANCH"
 
 echo "==> [2/6] Backend: composer install"
-composer install --no-dev --optimize-autoloader
+"$PHP_BIN" "$(command -v composer)" install --no-dev --optimize-autoloader
 
 echo "==> [3/6] Backend: migrate + cache"
-php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan storage:link || true
+"$PHP_BIN" artisan migrate --force
+"$PHP_BIN" artisan config:cache
+"$PHP_BIN" artisan route:cache
+"$PHP_BIN" artisan view:cache
+"$PHP_BIN" artisan storage:link || true
 
 echo "==> [4/6] Frontend: install & build"
 cd "$REPO_PATH/frontend"
