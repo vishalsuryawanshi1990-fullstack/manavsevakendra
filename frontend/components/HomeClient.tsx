@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Logo from './Logo';
 import MembershipFormExact from './MembershipFormExact';
+import { Component as InstituteStackInteractor } from './ui/connoisseur-stack-interactor';
 import type { CmsData, Institution, SiteSettings } from '../lib/cms';
 
 const navLinks = [
@@ -189,6 +190,9 @@ export default function HomeClient({ cms, settings }: { cms: CmsData; settings: 
           </div>
         </div>
       </section>
+
+      {/* Institutions interactive showcase */}
+      <InstitutionsShowcase institutions={cms.institutions} />
 
       {/* About / Mission / Journey */}
       <section id="about" className="bg-cream py-16">
@@ -578,6 +582,33 @@ function InstitutionIntro({ index, inst, bg }: { index: number; inst: Institutio
           </p>
         )}
       </motion.div>
+    </section>
+  );
+}
+
+// Maps each institution to the hover-reveal image + clip-path shape used by the showcase below.
+const SHOWCASE_VISUALS: Record<string, { image: string; clipId: string }> = {
+  economics: { image: '/images/eco-building.png', clipId: 'clip-original' },
+  'computer-science': { image: '/images/IT-building-front.png', clipId: 'clip-hexagons' },
+  psychology: { image: '/images/psycho-main-build.png', clipId: 'clip-pixels' },
+  library: { image: '/images/Library.png', clipId: 'clip-columns' },
+};
+
+function InstitutionsShowcase({ institutions }: { institutions: Institution[] }) {
+  const items = institutions.map((inst, i) => {
+    const visual = SHOWCASE_VISUALS[inst.id] ?? { image: '/images/home-banner.png', clipId: 'clip-original' };
+    return {
+      num: String(i + 1).padStart(2, '0'),
+      name: inst.nameMr,
+      subtitle: inst.nameEn,
+      clipId: visual.clipId,
+      image: visual.image,
+    };
+  });
+
+  return (
+    <section id="institutions-showcase">
+      <InstituteStackInteractor items={items} />
     </section>
   );
 }
