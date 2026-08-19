@@ -98,51 +98,60 @@ to your deployed API's base URL, e.g. `https://api.yourdomain.com/api`, then reb
 
 - **backend** — installs PHP deps, runs migrations against a throwaway sqlite DB, runs `php artisan test`
 - **frontend** — installs Node deps, runs `npm run build`
-- **deploy** — only on a push to `main`, and only if both jobs above pass: SSHes into the server and runs
-  `deploy/deploy.sh`, which pulls the latest code, reinstalls backend/frontend dependencies, runs migrations,
-  rebuilds the Next.js app, and restarts the cPanel Node.js app.
+- **deploy** — only on a push to `main`, and only if both jobs above pass: SSHes into the server, ensures
+  `DEPLOY_APP_PATH` is a git checkout of this repo on `main` (initializing it in place on first run — it
+  does **not** require the directory to be empty beforehand), then runs `deploy/deploy.sh`, which installs
+  PHP deps and runs migrations/caches for the **Laravel backend only**.
+
+  The Next.js frontend is **not** deployed by this pipeline — it's served separately through Hostinger's own
+  git-connected app hosting, which rebuilds automatically on every push to `main` independently of this
+  workflow.
 
 CI (the first two jobs) runs on every push and PR automatically — nothing to configure. **Deploy is gated
-behind three GitHub Secrets** that don't exist yet; until you add them, the `deploy` job is skipped safely.
+behind GitHub Secrets** that don't exist yet; until you add them, the `deploy` job fails at the SSH step with
+a "missing server host" error (safe — it doesn't affect the other two jobs).
 
 ### One-time setup to enable auto-deploy
 
-1. **Clone the repo onto the server once, manually** (the deploy script only *pulls*, it doesn't clone):
-   ```bash
-   ssh your-cpanel-host
-   cd ~
-   git clone <your-github-repo-url> manavsevakendra
-   ```
-   Then follow the manual deploy steps earlier in this README once (composer install, `.env` setup, migrate,
-   set up the cPanel Node.js App) so the server is in a working state before automation takes over.
-
-2. **Generate a dedicated deploy key** (don't reuse your personal SSH key):
-   ```bash
-   ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/manavseva_deploy_key -N ""
-   ```
-   This creates `manavseva_deploy_key` (private) and `manavseva_deploy_key.pub` (public).
-
-3. **Add the public key to the server**, appended to `~/.ssh/authorized_keys` on the cPanel account (via cPanel
-   → SSH Access → Manage SSH Keys → Import Key, or by pasting it into `~/.ssh/authorized_keys` over SSH).
-
-4. **Add these secrets** in your GitHub repo → Settings → Secrets and variables → Actions → New repository
+1. **Add these secrets** in your GitHub repo → Settings → Secrets and variables → Actions → New repository
    secret:
 
    | Secret name | Value |
    |---|---|
    | `DEPLOY_HOST` | your server's hostname or IP |
-   | `DEPLOY_USER` | your cPanel SSH username |
-   | `DEPLOY_SSH_KEY` | the **private** key contents (`cat ~/.ssh/manavseva_deploy_key`) |
+   | `DEPLOY_USER` | your SSH/cPanel username |
+   | `DEPLOY_PASSWORD` | your SSH/cPanel password |
    | `DEPLOY_PORT` | SSH port, only if not 22 |
+   | `DEPLOY_APP_PATH` | absolute path to the Laravel app's document root on the server, e.g. `/home/<user>/domains/api.yourdomain.com/laravel` |
 
-   Never paste the private key anywhere except this GitHub Secrets form — not in chat, not in a commit.
+   If you have an SSH key instead of a password, swap the `password:` input in the `deploy` job for `key:
+   ${{ secrets.DEPLOY_SSH_KEY }}` and add that secret instead — keys are preferred where available.
 
-5. Push to `main`. The `deploy` job will show up in the **Actions** tab and run `deploy/deploy.sh` on the
-   server automatically.
+2. **Make sure `DEPLOY_APP_PATH` is the actual document root your web server serves `api.yourdomain.com`
+   from** (check this in your hosting panel — the domain/subdomain's "Document Root" or "Application root"
+   setting). The pipeline will happily deploy a perfectly working Laravel app to the wrong folder if this
+   doesn't match, and every request will keep 404ing.
 
-If your repo path or Node virtualenv path on the server differs from `~/manavsevakendra` /
-`~/nodevenv/manavsevakendra/frontend/20`, edit the `REPO_PATH` / `NODE_VENV` defaults at the top of
-`deploy/deploy.sh` to match.
+3. **Configure `.env` directly on the server**, at `$DEPLOY_APP_PATH/.env` — it's gitignored, so the pipeline
+   never creates, uploads, or overwrites it. Set `DB_*`, `APP_KEY` (`php artisan key:generate` once),
+   `ADMIN_EMAIL`/`ADMIN_PASSWORD`, `CORS_ALLOWED_ORIGINS` (your real frontend domain, not `localhost`), and
+   Razorpay keys if using payments.
+
+4. Push to `main`. The `deploy` job will show up in the **Actions** tab. On the very first run it clones the
+   repo into `DEPLOY_APP_PATH` (in place — any existing untracked files there, like an old `.env`, are left
+   alone); on every run after, it fetches and hard-resets to `origin/main`.
+
+5. **Create the admin login once** — the deploy pipeline deliberately never runs `php artisan db:seed`
+   (it would silently overwrite any CMS content you've since edited through `/admin/cms` on every deploy).
+   After the first successful deploy, SSH/panel-terminal in and run:
+   ```bash
+   cd "$DEPLOY_APP_PATH"
+   php artisan db:seed --class=AdminUserSeeder --force
+   ```
+
+If the account's default `php`/`composer` on `PATH` resolve to an older version than the app needs,
+`deploy.sh` auto-detects and prefers a versioned `php83`/`php8.3` binary if one exists; override with a
+`PHP_BIN` env var if your host names it differently.
 
 ## Admin panel (`/admin`)
 
